@@ -1,3 +1,4 @@
+/* eslint-disable max-len */
 // ==UserScript==
 // @name         UBC course solver
 // @namespace    https://courses.students.ubc.ca/
@@ -16,46 +17,58 @@ const getValidRow = () => {
   const rows = $('table.section-summary tbody tr');
   return [...Array(rows.length)].map((_, ind) => {
     const row = rows.eq(ind).children();
-    // groupName, courseName
-    return [row.find("input[type='text']").val(), row.eq(2).text()];
-  }).filter((val) => val[0] !== '');
-};
-
-const setItem = (data) => {
-  localStorage.setItem(GROUPED_DATA_KEY, JSON.stringify(data));
+    return {
+      groupName: row.find("input[type='text']").val(),
+      courseName: row.eq(2).text(),
+      start: row.eq(8).text(),
+      end: row.eq(9).text(),
+    };
+  }).filter((val) => val.groupName !== '');
 };
 
 const getItem = () => {
   const item = localStorage.getItem(GROUPED_DATA_KEY);
-  return item !== null && item !== '' ? JSON.parse(localStorage.getItem(GROUPED_DATA_KEY)) : {};
+  return item !== null && item !== '' ? JSON.parse(item) : {};
 };
+const setItem = (data) => localStorage.setItem(GROUPED_DATA_KEY, JSON.stringify(data));
 
-const updateChosenCourses = () => {
-  const data = getItem();
-  if (!data) return;
+const drawChosenCourses = () => {
   $('#chosen-courses').empty();
-  getValidRow().forEach((e) => {
-    $('#chosen-courses').append(`<div>${e[0]}  ${e[1]}</div>`);
+  const savedData = getItem();
+  if (JSON.stringify(savedData) === '{}') return;
+  Object.keys(savedData).forEach((groupName) => {
+    const course = savedData[groupName];
+    $('#chosen-courses').append(`<div>${groupName} :      ${course.length} selected</div>`);
   });
 };
 
 const onUpdate = () => {
-  // groupName:[section1,section2,section3...]
-
-  updateChosenCourses();
+  const savedData = getItem();
+  // note: courseName is unique
+  getValidRow().forEach((newCourse) => {
+    Object.keys(savedData).forEach((savedGroupName) => {
+      savedData[savedGroupName] = savedData[savedGroupName].filter((savedCourse) => savedCourse.courseName !== newCourse.courseName);
+    });
+    if (savedData[newCourse.groupName] === undefined) savedData[newCourse.groupName] = [];
+    const { groupName, ...others } = newCourse;
+    savedData[groupName].push(others);
+  });
+  // delete
+  Object.keys(savedData).forEach((groupName) => {
+    if (savedData[groupName].length === 0) delete savedData[groupName];
+  });
+  setItem(savedData);
+  drawChosenCourses();
 };
 
 const onClear = () => {
-  localStorage.setItem(GROUPED_DATA_KEY, '');
+  setItem({});
+  console.log(getItem());
+  drawChosenCourses();
 };
 
 const onCreate = () => {
-  const data = {
-    'group name': ['1', '2', '3'],
-    'group name 2': ['1', '2', '3'],
-    'group name 3': ['1', '2', '3'],
-  };
-  setItem(data);
+  console.log('create');
 };
 
 const buttonsOnClickListener = () => {
@@ -84,6 +97,7 @@ const createElements = () => {
           </div>
       </div>`,
   );
+  drawChosenCourses();
 };
 
 const main = async () => {
