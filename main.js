@@ -10,39 +10,60 @@
 // @grant        none
 // ==/UserScript==
 
+const GROUPED_DATA_KEY = 'groupedData';
 
-var onUpdate = () =>{
-    // groupName:[section1,section2,section3...]
-    console.log("update")
-}
+const setItem = (data) => {
+  localStorage.setItem(GROUPED_DATA_KEY, JSON.stringify(data));
+};
 
-const onClear = () =>{
-    console.log("clear")
-}
+const getItem = () => {
+  const item = localStorage.getItem(GROUPED_DATA_KEY);
+  return item !== null && item !== ''
+    ? JSON.parse(localStorage.getItem(GROUPED_DATA_KEY))
+    : {};
+};
 
-const onCreate = () =>{
-    console.log("timetable will be created...")
-}
+const onUpdate = () => {
+  // groupName:[section1,section2,section3...]
+  const data = getItem();
+  console.log(data);
 
-const buttonsOnClickListener = () =>{
-    document.getElementById('group-name-update').addEventListener("click", onUpdate);
-    document.getElementById('create-timetable').addEventListener("click", onCreate);
-    document.getElementById('clear-chosen-courses').addEventListener("click", onClear);
-}
+  console.log('update');
+};
 
+const onClear = () => {
+  console.log('clear');
+  localStorage.setItem(GROUPED_DATA_KEY, '');
+};
 
-const main = async () =>{
-    console.log('aaa')
-    const INPUT_AREA = '<input type="text" style="max-width:80px; max-height:10px;"></input>';
-    $('thead tr').prepend(`
+const onCreate = () => {
+  const data = {
+    'group name': ['1', '2', '3'],
+    'group name 2': ['1', '2', '3'],
+    'group name 3': ['1', '2', '3'],
+  };
+  setItem(data);
+  console.log('timetable will be created...');
+};
+
+const buttonsOnClickListener = () => {
+  document.getElementById('group-name-update').addEventListener('click', onUpdate);
+  document.getElementById('create-timetable').addEventListener('click', onCreate);
+  document.getElementById('clear-chosen-courses').addEventListener('click', onClear);
+};
+
+const main = async () => {
+  console.log('aaa');
+  const INPUT_AREA = '<input type="text" style="max-width:80px; max-height:10px;"></input>';
+  $('thead tr').prepend(`
     <th>
         <div><button type="button" class="btn btn-warning" id="group-name-update">UPDATE</button></div>
         Group Name
     </th>`);
-    $('tbody tr').prepend(`<td>${INPUT_AREA}</td>`);
-    onUpdate();
+  $('tbody tr').prepend(`<td>${INPUT_AREA}</td>`);
+  onUpdate();
 
-    $('div.row-fluid div.span3').append(`
+  $('div.row-fluid div.span3').append(`
         <div style="margin-top:100px;border:1px dotted gray;border-radius:25% 10%;padding:3px;text-align:center;">
             <h4 style="margin:1px;">Chosen Courses</h4>
             <div>English 10</div>
@@ -61,8 +82,8 @@ const main = async () =>{
                 <button type="button" class="btn btn-danger" id="clear-chosen-courses">CLEAR</button>
             </div>
         </div>
-    `)
-    buttonsOnClickListener();
-}
+    `);
+  buttonsOnClickListener();
+};
 
 main();
