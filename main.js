@@ -18,16 +18,19 @@ const setItem = (data) => {
 
 const getItem = () => {
   const item = localStorage.getItem(GROUPED_DATA_KEY);
-  return item !== null && item !== ''
-    ? JSON.parse(localStorage.getItem(GROUPED_DATA_KEY))
-    : {};
+  return item !== null && item !== '' ? JSON.parse(localStorage.getItem(GROUPED_DATA_KEY)) : {};
+};
+
+const updateChosenCourses = () => {
+  const data = getItem();
+  if (!data) return;
+  $('#create-clear-buttons').before('<div>aaa</div>');
 };
 
 const onUpdate = () => {
   // groupName:[section1,section2,section3...]
-  const data = getItem();
-  console.log(data);
 
+  updateChosenCourses();
   console.log('update');
 };
 
@@ -52,37 +55,29 @@ const buttonsOnClickListener = () => {
   document.getElementById('clear-chosen-courses').addEventListener('click', onClear);
 };
 
-const main = async () => {
-  console.log('aaa');
+const createElements = () => {
   const INPUT_AREA = '<input type="text" style="max-width:80px; max-height:10px;"></input>';
   $('thead tr').prepend(`
-    <th>
-        <div><button type="button" class="btn btn-warning" id="group-name-update">UPDATE</button></div>
-        Group Name
-    </th>`);
+      <th>
+          <div><button type="button" class="btn btn-warning" id="group-name-update">UPDATE</button></div>
+          Group Name
+      </th>`);
   $('tbody tr').prepend(`<td>${INPUT_AREA}</td>`);
-  onUpdate();
+  // create #chosen-courses-area
+  $('div.row-fluid div.span3').append(
+    `
+      <div style="margin-top:100px;border:1px dotted gray;border-radius:10%;padding:3px;text-align:center;" id='chosen-courses-area' >
+          <h4 style="margin:1px;">Chosen Courses</h4>
+          <div id="create-clear-buttons">
+              <button type="button" class="btn btn-success" id="create-timetable">CREATE</button>
+              <button type="button" class="btn btn-danger" id="clear-chosen-courses">CLEAR</button>
+          </div>
+      </div>`,
+  );
+};
 
-  $('div.row-fluid div.span3').append(`
-        <div style="margin-top:100px;border:1px dotted gray;border-radius:25% 10%;padding:3px;text-align:center;">
-            <h4 style="margin:1px;">Chosen Courses</h4>
-            <div>English 10</div>
-            <div>English 10</div>
-            <div>English 10</div>
-            <div>English 10</div>
-            <div>English 10</div>
-            <div>English 10</div>
-            <div>English 10</div>
-            <div>English 10</div>
-            <div>English 10</div>
-            <div>English 10</div>
-            <div>English 10</div>
-            <div>
-                <button type="button" class="btn btn-success" id="create-timetable">CREATE</button>
-                <button type="button" class="btn btn-danger" id="clear-chosen-courses">CLEAR</button>
-            </div>
-        </div>
-    `);
+const main = async () => {
+  createElements();
   buttonsOnClickListener();
 };
 
