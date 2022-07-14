@@ -12,6 +12,15 @@
 
 const GROUPED_DATA_KEY = 'groupedData';
 
+const getValidRow = () => {
+  const rows = $('table.section-summary tbody tr');
+  return [...Array(rows.length)].map((_, ind) => {
+    const row = rows.eq(ind).children();
+    // groupName, courseName
+    return [row.find("input[type='text']").val(), row.eq(2).text()];
+  }).filter((val) => val[0] !== '');
+};
+
 const setItem = (data) => {
   localStorage.setItem(GROUPED_DATA_KEY, JSON.stringify(data));
 };
@@ -24,18 +33,19 @@ const getItem = () => {
 const updateChosenCourses = () => {
   const data = getItem();
   if (!data) return;
-  $('#create-clear-buttons').before('<div>aaa</div>');
+  $('#chosen-courses').empty();
+  getValidRow().forEach((e) => {
+    $('#chosen-courses').append(`<div>${e[0]}  ${e[1]}</div>`);
+  });
 };
 
 const onUpdate = () => {
   // groupName:[section1,section2,section3...]
 
   updateChosenCourses();
-  console.log('update');
 };
 
 const onClear = () => {
-  console.log('clear');
   localStorage.setItem(GROUPED_DATA_KEY, '');
 };
 
@@ -46,7 +56,6 @@ const onCreate = () => {
     'group name 3': ['1', '2', '3'],
   };
   setItem(data);
-  console.log('timetable will be created...');
 };
 
 const buttonsOnClickListener = () => {
@@ -66,8 +75,9 @@ const createElements = () => {
   // create #chosen-courses-area
   $('div.row-fluid div.span3').append(
     `
-      <div style="margin-top:100px;border:1px dotted gray;border-radius:10%;padding:3px;text-align:center;" id='chosen-courses-area' >
+      <div style="margin-top:100px;border:1px dotted gray;border-radius:10%;padding:3px;text-align:center;transform:translatex(-100px);" id='chosen-courses-area' >
           <h4 style="margin:1px;">Chosen Courses</h4>
+          <div id="chosen-courses"></div>
           <div id="create-clear-buttons">
               <button type="button" class="btn btn-success" id="create-timetable">CREATE</button>
               <button type="button" class="btn btn-danger" id="clear-chosen-courses">CLEAR</button>
