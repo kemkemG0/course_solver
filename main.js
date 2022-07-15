@@ -1,3 +1,4 @@
+/* eslint-disable no-use-before-define */
 /* eslint-disable max-len */
 // ==UserScript==
 // @name         UBC course solver
@@ -50,7 +51,7 @@ const setItem = (data) => {
   localStorage.setItem(GROUPED_DATA_KEY, JSON.stringify(copied));
 };
 
-const drawChosenCourses = () => {
+const renderChosenCourses = () => {
   $('#chosen-courses').empty();
   const savedData = getItem();
   if (JSON.stringify(savedData) === '{}') return;
@@ -80,7 +81,7 @@ const deleteCourse = (id) => {
   const storedData = getItem();
   storedData[groupName] = storedData[groupName].filter((course) => course.courseName.replaceAll(' ', '') !== id.replace('delete-', ''));
   setItem(storedData);
-  drawChosenCourses();
+  renderChosenCourses();
 };
 
 const onUpdate = () => {
@@ -98,16 +99,16 @@ const onUpdate = () => {
     if (savedData[groupName].length === 0) delete savedData[groupName];
   });
   setItem(savedData);
-  drawChosenCourses();
+  renderChosenCourses();
 };
 
 const onClear = () => {
   setItem({});
-  drawChosenCourses();
+  renderTable([]);
+  renderChosenCourses();
 };
 
 const onCreate = () => {
-  console.log('create');
   // time is from 00:00 to 24:00
   // 0000 to 2460
   // ready array timetable[7][2460]
@@ -125,10 +126,11 @@ const onCreate = () => {
     }
     return true;
   };
+
+  let result;
   const dfs = (currentGroupInd = 0) => {
     if (currentGroupInd === groupNameList.length) {
-      const result = isTimeTableOK() ? Object.keys(tempSelected).map((key) => tempSelected[key]) : [];
-      console.log(result);
+      result = isTimeTableOK() ? Object.keys(tempSelected).map((key) => tempSelected[key]) : [];
       return;
     }
     const currentGroupCourseList = savedData[groupNameList[currentGroupInd]];
@@ -149,6 +151,7 @@ const onCreate = () => {
     });
   };
   dfs();
+  renderTable(result);
 };
 
 const buttonsOnClickListener = () => {
@@ -165,7 +168,7 @@ const buttonsOnClickListener = () => {
 const TIME_SLOT_LIST = [700, 730, 800, 830, 900, 930, 1000, 1030, 1100, 1130, 1200, 1230, 1300, 1330, 1400, 1430, 1500, 1530, 1600, 1630, 1700, 1730, 1800, 1830, 1900, 1930, 2000, 2030];
 const time2timeSlot = (time) => TIME_SLOT_LIST.indexOf(time);
 
-const createTimeTableWithTerm = (term) => {
+const createBaseTable = (term) => {
   let html = `<table><tbody">
     <tr>
       <td class="tt-header-mini">&nbsp;</td>
@@ -177,39 +180,33 @@ const createTimeTableWithTerm = (term) => {
     </tr><tr></tr>`;
   TIME_SLOT_LIST.forEach((time, timeSlot) => {
     html += `<tr><td align="center" class="tt-header-mini">${time}</td>`;
-    [0, 1, 2, 3, 4].forEach((day) => { html += `<td class="tt-notime-mini" id="t${term}-${timeSlot}-${day}">&nbsp;</td>`; });
+    [0, 1, 2, 3, 4].forEach((day) => { html += `<td class="tt-notime-mini" id="new-t${term}-${timeSlot}-${day}">&nbsp;</td>`; });
     html += '</tr>';
   });
   html += '</tbody></table>';
   return html;
 };
 
-const createTimeTable = () => {
-  const res = `<table cellspacing="0" cellpadding="0" border="1">
-    <tbody>
-    <tr><td class="tt-legend"><h6>Timetable</h6></td></tr>
-    <tr><td>
-        <table cellpadding="0" border="0" cellspacing="2"><tbody>
-            <tr>
-                <td align="center"><h6>Term 1</h6></td>
-                <td align="center"><h6>Term 2</h6></td>
-            </tr>
-            <tr>
-                <td valign="top">
-                ${createTimeTableWithTerm(1)}
-                <!---->
-                </td>
-                <td valign="top">
-                ${createTimeTableWithTerm(2)}
-                <!---->
-                </td>
-            </tr>
-        </tbody></table>
-    </td></tr>
-    </tbody>
-</table>
-`;
-  return res;
+const editTimeTable = (tableData) => {
+  // change every class to notime
+  TIME_SLOT_LIST.forEach((time, timeSlot) => {
+    [1, 2].forEach((term) => {
+      [0, 1, 2, 3, 4].forEach((day) => {
+        const id = `new-t${term}-${timeSlot}-${day}`;
+        $(`#${id}`).attr('class', 'tt-notime-mini');
+      });
+    });
+  });
+  // ddd color
+  tableData.forEach((course) => {
+    course.days.forEach((day) => {
+      const id = `new-t${1}-${time2timeSlot(course.start)}-${day}`;
+      $(`#${id}`).attr('class', 'tt-selcourse-mini');
+    });
+  });
+};
+const renderTable = (tableData) => {
+  editTimeTable(tableData);
 };
 
 const addGlobalCSS = () => {
@@ -244,25 +241,58 @@ const createElements = () => {
   // create #chosen-courses-area
   $('form[name="sect_srch_criteria_simp_search"]').after(
     `
-    <hr>
+    <hr />
     <h3>Course Solver</h3>
-    <div style="display:flex;justify-content: space-around;">
-      <div style="margin:auto 0;" id='chosen-courses-area' >
-          <h3 style="margin:1px;">Chosen Courses</h3>
-          <div id="chosen-courses"></div>
-          <div id="create-clear-buttons">
-              <button type="button" class="btn btn-success" id="create-timetable">CREATE</button>
-              <button type="button" class="btn btn-danger" id="clear-chosen-courses">CLEAR</button>
-          </div>
+    <div style="display: flex; justify-content: space-around">
+      <div style="margin: auto 0" id="chosen-courses-area">
+        <h3 style="margin: 1px">Chosen Courses</h3>
+        <div id="chosen-courses"></div>
+        <div id="create-clear-buttons">
+          <button type="button" class="btn btn-success" id="create-timetable">
+            CREATE
+          </button>
+          <button type="button" class="btn btn-danger" id="clear-chosen-courses">
+            CLEAR
+          </button>
+        </div>
       </div>
-      <div id='suggest-timetable'>
-        ${createTimeTable()}
+      <div id="suggest-timetable">
+        <table cellspacing="0" cellpadding="0" border="1">
+          <tbody>
+            <tr>
+              <td class="tt-legend"><h6>Timetable</h6></td>
+            </tr>
+            <tr>
+              <td>
+                <table cellpadding="0" border="0" cellspacing="2">
+                  <tbody>
+                    <tr>
+                      <td align="center"><h6>Term 1</h6></td>
+                      <td align="center"><h6>Term 2</h6></td>
+                    </tr>
+                    <tr>
+                      <td valign="top">
+                        ${createBaseTable(1)}
+                        <!---->
+                      </td>
+                      <td valign="top">
+                        ${createBaseTable(2)}
+                        <!---->
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </td>
+            </tr>
+          </tbody>
+        </table>
       </div>
-      </div>
-      <hr>
+    </div>
+    <hr />
       `,
   );
-  drawChosenCourses();
+  renderChosenCourses();
+  renderTable([]);
 };
 
 const main = async () => {
