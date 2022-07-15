@@ -57,7 +57,7 @@ const drawChosenCourses = () => {
   Object.keys(savedData).forEach((groupName) => {
     const courseList = savedData[groupName];
     const createAccordion = () => {
-      let res = `<details><summary>${groupName}</summary>`;
+      let res = `<details><summary><strong>${groupName} :      ${courseList.length} selected</strong></summary>`;
       courseList.forEach((course) => {
         res += `<div id="selected-${course.courseName.replaceAll(' ', '')}">${course.courseName} <input type="button" value="delete" class="course-accordion-delete-button" id="delete-${course.courseName.replaceAll(' ', '')}" ></div>`;
       });
@@ -66,7 +66,6 @@ const drawChosenCourses = () => {
     };
     $('#chosen-courses').append(`
     <div id="group-${groupName}">
-        <strong>${groupName} :      ${courseList.length} selected</strong>
         ${createAccordion()}
         </details>
     </div>
@@ -168,9 +167,9 @@ const createElements = () => {
       </th>`);
   $('tbody tr').prepend(`<td>${INPUT_AREA}</td>`);
   // create #chosen-courses-area
-  $('div.row-fluid div.span3').append(
+  $('form[name="sect_srch_criteria_simp_search"]').after(
     `
-      <div style="margin-top:100px;border:1px dotted gray;border-radius:10%;padding:3px;text-align:center;transform:translate(-80px,150px);" id='chosen-courses-area' >
+      <div style="margin-top:100px;border:1px dotted gray; padding:30px;" id='chosen-courses-area' >
           <h4 style="margin:1px;">Chosen Courses</h4>
           <div id="chosen-courses"></div>
           <div id="create-clear-buttons">
