@@ -200,8 +200,12 @@ const editTimeTable = (tableData) => {
   // ddd color
   tableData.forEach((course) => {
     course.days.forEach((day) => {
-      const id = `new-t${1}-${time2timeSlot(course.start)}-${day}`;
-      $(`#${id}`).attr('class', 'tt-selcourse-mini');
+      TIME_SLOT_LIST.forEach((time) => {
+        if (course.start <= time && time <= course.end) {
+          const id = `new-t${1}-${time2timeSlot(time)}-${day}`;
+          $(`#${id}`).attr('class', 'tt-selcourse-mini');
+        }
+      });
     });
   });
 };
