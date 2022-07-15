@@ -5,7 +5,7 @@
 // @version      0.1
 // @description  opitimise choosing your courses
 // @author       kemkemG0
-// @match        https://courses.students.ubc.ca/cs/courseschedule?pname=subjarea&tname=sectsearch
+// @match        https://courses.students.ubc.ca/cs/courseschedule?pname=subjarea&tname=sectsearch*
 // @match        https://courses.students.ubc.ca/cs/courseschedule
 // @icon         https://www.google.com/s2/favicons?sz=64&domain=stackoverflow.com
 // @grant        none
@@ -49,9 +49,27 @@ const drawChosenCourses = () => {
   const savedData = getItem();
   if (JSON.stringify(savedData) === '{}') return;
   Object.keys(savedData).forEach((groupName) => {
-    const course = savedData[groupName];
-    $('#chosen-courses').append(`<div><strong>${groupName} :      ${course.length} selected</strong></div>`);
+    const courseList = savedData[groupName];
+    const createAccordion = () => {
+      let res = `<details><summary>${groupName}</summary>`;
+      courseList.forEach((course) => {
+        res += `<div id="selected-${course.courseName.replaceAll(' ', '')}">${course.courseName} <input type="button" value="delete" class="course-accordion-delete-button" id="delete-${course.courseName.replaceAll(' ', '')}" ></div>`;
+      });
+      res += '</details>';
+      return res;
+    };
+    $('#chosen-courses').append(`
+    <div>
+        <strong>${groupName} :      ${courseList.length} selected</strong>
+        ${createAccordion()}
+        </details>
+    </div>
+`);
   });
+};
+
+const deleteCourse = (id) => {
+  $(`#${id.replace('delete-', 'selected-')}`).remove();
 };
 
 const onUpdate = () => {
@@ -85,6 +103,7 @@ const onCreate = () => {
   const timeTable = [...Array(7)].map(() => Array(2465).fill(0));
   const savedData = getItem();
   const groupNameList = Object.keys(savedData);
+  const tempSelected = {};
   const isTimeTableOK = () => {
     for (let day = 0; day < 7; day += 1) {
       let sum = 0;
@@ -97,8 +116,8 @@ const onCreate = () => {
   };
   const dfs = (currentGroupInd = 0) => {
     if (currentGroupInd === groupNameList.length) {
-      const msg = isTimeTableOK() ? 'ok' : 'ng';
-      console.log(msg);
+      const result = isTimeTableOK() ? Object.keys(tempSelected).map((key) => tempSelected[key]) : [];
+      console.log(result);
       return;
     }
     const currentGroupCourseList = savedData[groupNameList[currentGroupInd]];
@@ -109,11 +128,13 @@ const onCreate = () => {
         timeTable[day][course.start] += 1;
         timeTable[day][course.end] -= 1;
       });
+      tempSelected[course.courseName] = { ...course };
       dfs(currentGroupInd + 1);
       course.days.forEach((day) => {
         timeTable[day][course.start] -= 1;
         timeTable[day][course.end] += 1;
       });
+      delete tempSelected[course.courseName];
     });
   };
   dfs();
@@ -123,6 +144,7 @@ const buttonsOnClickListener = () => {
   document.getElementById('group-name-update').addEventListener('click', onUpdate);
   document.getElementById('create-timetable').addEventListener('click', onCreate);
   document.getElementById('clear-chosen-courses').addEventListener('click', onClear);
+  $('body').on('click', '.course-accordion-delete-button', (e) => { deleteCourse(e.target.id); });
 };
 
 const createElements = () => {
