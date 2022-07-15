@@ -13,7 +13,7 @@
 // ==/UserScript==
 
 const GROUPED_DATA_KEY = 'groupedData';
-const WEEK_DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+const WEEK_DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
 const getValidRow = () => {
   const rows = $('table.section-summary tbody tr');
@@ -22,7 +22,7 @@ const getValidRow = () => {
     return {
       groupName: row.find("input[type='text']").val(),
       courseName: row.eq(2).text(),
-      days: [0, 1, 2, 3, 4, 5, 6, 7].filter((__, i) => row.eq(7).text().includes(WEEK_DAYS[i])),
+      days: [0, 1, 2, 3, 4, 5, 6].filter((__, i) => row.eq(7).text().includes(WEEK_DAYS[i])),
       start: row.eq(8).text().split(':').join(''),
       end: row.eq(9).text().split(':').join(''),
     };
