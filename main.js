@@ -158,7 +158,82 @@ const buttonsOnClickListener = () => {
   $('body').on('click', '.course-accordion-delete-button', (e) => { deleteCourse(e.target.id); });
 };
 
+/*
+ * It goes : TERM-TIMESLOT-DAY (e.g. t1-2-0 ,t1-3-0, t1-2-2, t1-3-2, t1-2-4, t1-3-4 where
+ * t1-2-0 would be be term 1 - 8:00  (0 is 700, 1 is 730) - Monday (0 is Monday, 1 is Tuesday, etc))
+*/
+const TIME_SLOT_LIST = [700, 730, 800, 830, 900, 930, 1000, 1030, 1100, 1130, 1200, 1230, 1300, 1330, 1400, 1430, 1500, 1530, 1600, 1630, 1700, 1730, 1800, 1830, 1900, 1930, 2000, 2030];
+const time2timeSlot = (time) => TIME_SLOT_LIST.indexOf(time);
+
+const createTimeTableWithTerm = (term) => {
+  let html = `<table><tbody">
+    <tr>
+      <td class="tt-header-mini">&nbsp;</td>
+      <td class="tt-header-mini">Mon</td>
+      <td class="tt-header-mini">Tue</td>
+      <td class="tt-header-mini">Wed</td>
+      <td class="tt-header-mini">Thu</td>
+      <td class="tt-header-mini">Fri&nbsp;&nbsp;</td>
+    </tr><tr></tr>`;
+  TIME_SLOT_LIST.forEach((time, timeSlot) => {
+    html += `<tr><td align="center" class="tt-header-mini">${time}</td>`;
+    [0, 1, 2, 3, 4].forEach((day) => { html += `<td class="tt-notime-mini" id="t${term}-${timeSlot}-${day}">&nbsp;</td>`; });
+    html += '</tr>';
+  });
+  html += '</tbody></table>';
+  return html;
+};
+
+const createTimeTable = () => {
+  const res = `<table cellspacing="0" cellpadding="0" border="1">
+    <tbody>
+    <tr><td class="tt-legend"><h6>Timetable</h6></td></tr>
+    <tr><td>
+        <table cellpadding="0" border="0" cellspacing="2"><tbody>
+            <tr>
+                <td align="center"><h6>Term 1</h6></td>
+                <td align="center"><h6>Term 2</h6></td>
+            </tr>
+            <tr>
+                <td valign="top">
+                ${createTimeTableWithTerm(1)}
+                <!---->
+                </td>
+                <td valign="top">
+                ${createTimeTableWithTerm(2)}
+                <!---->
+                </td>
+            </tr>
+        </tbody></table>
+    </td></tr>
+    </tbody>
+</table>
+`;
+  return res;
+};
+
+const addGlobalCSS = () => {
+  const res = `
+  <style>
+  div #suggest-timetable table tr td table{
+    font-size: 10px;
+    line-height: 100%;
+    border-collapse: separate !important;
+    border-spacing: 2px !important;
+    margin: 0;
+    padding: 0;
+  }
+  #suggest-timetable h6, #chosen-courses-area h3 {
+    margin: 0;
+    padding: 0;
+}
+  </style>
+  `;
+  $('head').prepend(res);
+};
+
 const createElements = () => {
+  addGlobalCSS();
   const INPUT_AREA = '<input type="text" style="max-width:80px; max-height:10px;"></input>';
   $('thead tr').prepend(`
       <th>
@@ -169,14 +244,23 @@ const createElements = () => {
   // create #chosen-courses-area
   $('form[name="sect_srch_criteria_simp_search"]').after(
     `
-      <div style="margin-top:100px;border:1px dotted gray; padding:30px;" id='chosen-courses-area' >
-          <h4 style="margin:1px;">Chosen Courses</h4>
+    <hr>
+    <h3>Course Solver</h3>
+    <div style="display:flex;justify-content: space-around;">
+      <div style="margin:auto 0;" id='chosen-courses-area' >
+          <h3 style="margin:1px;">Chosen Courses</h3>
           <div id="chosen-courses"></div>
           <div id="create-clear-buttons">
               <button type="button" class="btn btn-success" id="create-timetable">CREATE</button>
               <button type="button" class="btn btn-danger" id="clear-chosen-courses">CLEAR</button>
           </div>
-      </div>`,
+      </div>
+      <div id='suggest-timetable'>
+        ${createTimeTable()}
+      </div>
+      </div>
+      <hr>
+      `,
   );
   drawChosenCourses();
 };
