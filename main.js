@@ -42,7 +42,13 @@ const getItem = () => {
   }
   return {};
 };
-const setItem = (data) => localStorage.setItem(GROUPED_DATA_KEY, JSON.stringify(data));
+const setItem = (data) => {
+  const copied = { ...data };
+  Object.keys(data).forEach((groupName) => {
+    if (data[groupName].length === 0) delete copied[groupName];
+  });
+  localStorage.setItem(GROUPED_DATA_KEY, JSON.stringify(copied));
+};
 
 const drawChosenCourses = () => {
   $('#chosen-courses').empty();
@@ -59,7 +65,7 @@ const drawChosenCourses = () => {
       return res;
     };
     $('#chosen-courses').append(`
-    <div>
+    <div id="group-${groupName}">
         <strong>${groupName} :      ${courseList.length} selected</strong>
         ${createAccordion()}
         </details>
@@ -69,7 +75,13 @@ const drawChosenCourses = () => {
 };
 
 const deleteCourse = (id) => {
-  $(`#${id.replace('delete-', 'selected-')}`).remove();
+  // delete this from localstorage and rerender "Chosen Courses"
+  const newId = id.replace('delete-', 'selected-');
+  const groupName = $(`#${newId}`).parents('div')[0].id.replace('group-', '');
+  const storedData = getItem();
+  storedData[groupName] = storedData[groupName].filter((course) => course.courseName.replaceAll(' ', '') !== id.replace('delete-', ''));
+  setItem(storedData);
+  drawChosenCourses();
 };
 
 const onUpdate = () => {
