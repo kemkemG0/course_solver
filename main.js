@@ -32,7 +32,6 @@ const getItem = () => {
   const item = localStorage.getItem(GROUPED_DATA_KEY);
   if (item !== null && item !== '') {
     const data = JSON.parse(item);
-
     Object.keys(data).forEach((group) => {
       data[group].forEach((course, ind) => {
         const { start, end, ...others } = course;
@@ -51,7 +50,7 @@ const drawChosenCourses = () => {
   if (JSON.stringify(savedData) === '{}') return;
   Object.keys(savedData).forEach((groupName) => {
     const course = savedData[groupName];
-    $('#chosen-courses').append(`<div>${groupName} :      ${course.length} selected</div>`);
+    $('#chosen-courses').append(`<div><strong>${groupName} :      ${course.length} selected</strong></div>`);
   });
 };
 
@@ -86,27 +85,26 @@ const onCreate = () => {
   const timeTable = [...Array(7)].map(() => Array(2465).fill(0));
   const savedData = getItem();
   const groupNameList = Object.keys(savedData);
-  const check = () => {
+  const isTimeTableOK = () => {
     for (let day = 0; day < 7; day += 1) {
       let sum = 0;
       for (let time = 0; time < 2460; time += 1) {
         sum += timeTable[day][time];
-        if (sum >= 2) {
-          return false;
-        }
+        if (sum >= 2) { return false; }
       }
     }
     return true;
   };
   const dfs = (currentGroupInd = 0) => {
     if (currentGroupInd === groupNameList.length) {
-      const msg = check() ? 'ok' : 'ng';
+      const msg = isTimeTableOK() ? 'ok' : 'ng';
       console.log(msg);
       return;
     }
     const currentGroupCourseList = savedData[groupNameList[currentGroupInd]];
     currentGroupCourseList.forEach((course) => {
     // deciede which course to use
+    // Euler Tour(modify => recursion => fix)
       course.days.forEach((day) => {
         timeTable[day][course.start] += 1;
         timeTable[day][course.end] -= 1;
