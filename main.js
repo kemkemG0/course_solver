@@ -12,6 +12,7 @@
 // ==/UserScript==
 
 const GROUPED_DATA_KEY = 'groupedData';
+const WEEK_DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
 const getValidRow = () => {
   const rows = $('table.section-summary tbody tr');
@@ -20,15 +21,27 @@ const getValidRow = () => {
     return {
       groupName: row.find("input[type='text']").val(),
       courseName: row.eq(2).text(),
-      start: row.eq(8).text(),
-      end: row.eq(9).text(),
+      days: [0, 1, 2, 3, 4, 5, 6, 7].filter((__, i) => row.eq(7).text().includes(WEEK_DAYS[i])),
+      start: row.eq(8).text().split(':').join(''),
+      end: row.eq(9).text().split(':').join(''),
     };
   }).filter((val) => val.groupName !== '');
 };
 
 const getItem = () => {
   const item = localStorage.getItem(GROUPED_DATA_KEY);
-  return item !== null && item !== '' ? JSON.parse(item) : {};
+  if (item !== null && item !== '') {
+    const data = JSON.parse(item);
+
+    Object.keys(data).forEach((group) => {
+      data[group].forEach((course, ind) => {
+        const { start, end, ...others } = course;
+        data[group][ind] = { ...others, start: parseInt(start, 10), end: parseInt(end, 10) };
+      });
+    });
+    return data;
+  }
+  return {};
 };
 const setItem = (data) => localStorage.setItem(GROUPED_DATA_KEY, JSON.stringify(data));
 
@@ -53,7 +66,6 @@ const onUpdate = () => {
     const { groupName, ...others } = newCourse;
     savedData[groupName].push(others);
   });
-  // delete
   Object.keys(savedData).forEach((groupName) => {
     if (savedData[groupName].length === 0) delete savedData[groupName];
   });
@@ -63,12 +75,50 @@ const onUpdate = () => {
 
 const onClear = () => {
   setItem({});
-  console.log(getItem());
   drawChosenCourses();
 };
 
 const onCreate = () => {
   console.log('create');
+  // time is from 00:00 to 24:00
+  // 0000 to 2460
+  // ready array timetable[7][2460]
+  const timeTable = [...Array(7)].map(() => Array(2465).fill(0));
+  const savedData = getItem();
+  const groupNameList = Object.keys(savedData);
+  const check = () => {
+    for (let day = 0; day < 7; day += 1) {
+      let sum = 0;
+      for (let time = 0; time < 2460; time += 1) {
+        sum += timeTable[day][time];
+        if (sum >= 2) {
+          return false;
+        }
+      }
+    }
+    return true;
+  };
+  const dfs = (currentGroupInd = 0) => {
+    if (currentGroupInd === groupNameList.length) {
+      const msg = check() ? 'ok' : 'ng';
+      console.log(msg);
+      return;
+    }
+    const currentGroupCourseList = savedData[groupNameList[currentGroupInd]];
+    currentGroupCourseList.forEach((course) => {
+    // deciede which course to use
+      course.days.forEach((day) => {
+        timeTable[day][course.start] += 1;
+        timeTable[day][course.end] -= 1;
+      });
+      dfs(currentGroupInd + 1);
+      course.days.forEach((day) => {
+        timeTable[day][course.start] -= 1;
+        timeTable[day][course.end] += 1;
+      });
+    });
+  };
+  dfs();
 };
 
 const buttonsOnClickListener = () => {
@@ -88,7 +138,7 @@ const createElements = () => {
   // create #chosen-courses-area
   $('div.row-fluid div.span3').append(
     `
-      <div style="margin-top:100px;border:1px dotted gray;border-radius:10%;padding:3px;text-align:center;transform:translatex(-100px);" id='chosen-courses-area' >
+      <div style="margin-top:100px;border:1px dotted gray;border-radius:10%;padding:3px;text-align:center;transform:translate(-80px,150px);" id='chosen-courses-area' >
           <h4 style="margin:1px;">Chosen Courses</h4>
           <div id="chosen-courses"></div>
           <div id="create-clear-buttons">
