@@ -141,7 +141,10 @@ const onCreate = () => {
   if (G_results.length === 0) errorMsg += 'Combination that allows you to take all types of classes was not found.<br>The combinations with the maximum number of classes will be displayed on the timetable.';
 
   renderTable(errorMsg);
+  renderScheduledCourses();
 };
+
+const getTimeTableNumber = () => parseInt($('#suggest-timetable').attr('data-combi'), 10);
 
 const buttonsOnClickListener = () => {
   document.getElementById('group-name-update').addEventListener('click', onUpdate);
@@ -149,16 +152,18 @@ const buttonsOnClickListener = () => {
   document.getElementById('clear-chosen-courses').addEventListener('click', onClear);
   $('body').on('click', '.course-accordion-delete-button', (e) => { deleteCourse(e.target.id); });
   document.getElementById('prev-table').addEventListener('click', () => {
-    const current = parseInt($('#suggest-timetable').attr('data-combi'), 10);
+    const current = getTimeTableNumber();
     $('#suggest-timetable').attr('data-combi', Math.max(0, current - 1));
-    const newNum = parseInt($('#suggest-timetable').attr('data-combi'), 10);
+    const newNum = getTimeTableNumber();
     renderTable('', newNum);
+    renderScheduledCourses();
   });
   document.getElementById('next-table').addEventListener('click', () => {
-    const current = parseInt($('#suggest-timetable').attr('data-combi'), 10);
+    const current = getTimeTableNumber();
     $('#suggest-timetable').attr('data-combi', Math.min(G_results.length - 1, current + 1));
-    const newNum = parseInt($('#suggest-timetable').attr('data-combi'), 10);
+    const newNum = getTimeTableNumber();
     renderTable('', newNum);
+    renderScheduledCourses();
   });
 };
 
@@ -223,6 +228,16 @@ const editTimeTable = (tableNum, errorMsg = '') => {
 const renderTable = (errorMsg, tableNum = 0) => {
   clearTimeTable();
   editTimeTable(tableNum, errorMsg);
+};
+
+const renderScheduledCourses = () => {
+  $('#time-schedule-list').empty();
+  if (G_results.length === 0) return;
+  let html = '';
+  G_results[getTimeTableNumber()].forEach((course) => {
+    html += `<div>${course.courseName}</div>`;
+  });
+  $('#time-schedule-list').append(html);
 };
 
 const renderChosenCourses = () => {
@@ -364,7 +379,7 @@ const createElements = () => {
         </table>
         <a style="display:block; font-size:20px; margin:20px;text-decoration: none;" href="javascript:void(0)" id="next-table">>></a>
       </div>
-      <divid="time-schedule-list"></div>
+      <div id="time-schedule-list"></div>
     </div>
     <hr />
       `,
