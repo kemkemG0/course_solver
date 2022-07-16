@@ -23,6 +23,7 @@ const getValidRow = () => {
       return {
         groupName: row.find("input[type='text']").val(),
         courseName: row.eq(2).text(),
+        term: Number(row.eq(4).text()),
         days: [0, 1, 2, 3, 4, 5, 6].filter((__, i) => row.eq(7).text().includes(WEEK_DAYS[i])),
         start: row.eq(8).text().split(':').join(''),
         end: row.eq(9).text().split(':').join(''),
@@ -37,8 +38,12 @@ const getItem = () => {
   const data = JSON.parse(item);
   Object.keys(data).forEach((group) => {
     data[group].forEach((course, ind) => {
-      const { start, end, ...others } = course;
-      data[group][ind] = { ...others, start: parseInt(start, 10), end: parseInt(end, 10) };
+      const {
+        start, end, term, ...others
+      } = course;
+      data[group][ind] = {
+        ...others, term: parseInt(term, 10), start: parseInt(start, 10), end: parseInt(end, 10),
+      };
     });
   });
   return data;
