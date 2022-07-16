@@ -111,10 +111,13 @@ const onCreate = () => {
     return true;
   };
 
-  let result;
+  let result = [];
+  const results = [];
+
   const dfs = (currentGroupInd = 0) => {
     if (currentGroupInd === groupNameList.length) {
       result = isTimeTableOK() ? Object.keys(tempSelected).map((key) => tempSelected[key]) : [];
+      if (isTimeTableOK())results.push(Object.keys(tempSelected).map((key) => tempSelected[key]));
       return;
     }
     const currentGroupCourseList = savedData[groupNameList[currentGroupInd]];
@@ -135,7 +138,10 @@ const onCreate = () => {
     });
   };
   dfs();
-  renderTable(result);
+  let errorMsg = '';
+  if (results.length === 0) errorMsg += 'Combination that allows you to take all types of classes was not found.<br>The combinations with the maximum number of classes will be displayed on the timetable.';
+  console.log(results);
+  renderTable(result, errorMsg);
 };
 
 const buttonsOnClickListener = () => {
@@ -171,7 +177,9 @@ const createBaseTable = (term) => {
   return html;
 };
 
-const editTimeTable = (tableData) => {
+const editTimeTable = (tableData, errorMsg = '') => {
+  $('#comb-not-found').empty();
+  $('#comb-not-found').append(errorMsg);
   // change every class to notime
   TIME_SLOT_LIST.forEach((time, timeSlot) => {
     [1, 2].forEach((term) => {
@@ -195,8 +203,8 @@ const editTimeTable = (tableData) => {
   });
 };
 
-const renderTable = (tableData) => {
-  editTimeTable(tableData);
+const renderTable = (tableData, errorMsg) => {
+  editTimeTable(tableData, errorMsg);
 };
 
 const renderChosenCourses = () => {
@@ -207,9 +215,11 @@ const renderChosenCourses = () => {
     const courseList = savedData[groupName];
     const createAccordion = () => {
       let res = `<details><summary><strong>${groupName} :      ${courseList.length} selected</strong></summary>`;
+      res += '<ul>';
       courseList.forEach((course) => {
-        res += `<div id="selected-${course.courseName.replaceAll(' ', '')}">${course.courseName} <input type="button" value="delete" class="course-accordion-delete-button" id="delete-${course.courseName.replaceAll(' ', '')}" ></div>`;
+        res += `<li id="selected-${course.courseName.replaceAll(' ', '')}">${course.courseName} <input type="button" value="delete" class="course-accordion-delete-button btn-danger" id="delete-${course.courseName.replaceAll(' ', '')}" ></li>`;
       });
+      res += '</ul>';
       res += '</details>';
       return res;
     };
@@ -283,7 +293,7 @@ const createElements = () => {
           <div><button type="button" class="btn btn-warning" id="group-name-update">UPDATE</button></div>
           Group Name
       </th>`);
-  $('tbody tr').prepend(`<td>${INPUT_AREA}</td>`);
+  $('table.section-summary tbody tr').prepend(`<td>${INPUT_AREA}</td>`);
   // create #chosen-courses-area
   $('form[name="sect_srch_criteria_simp_search"]').after(
     `
@@ -301,6 +311,7 @@ const createElements = () => {
             CLEAR
           </button>
         </div>
+        <div id="comb-not-found" style="color:red;"></div>
       </div>
       <div id="suggest-timetable">
         <table cellspacing="0" cellpadding="0" border="1">
