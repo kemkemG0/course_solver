@@ -13,65 +13,43 @@
 // ==/UserScript==
 
 const GROUPED_DATA_KEY = 'groupedData';
-const WEEK_DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+const WEEK_DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'];
 
 const getValidRow = () => {
   const rows = $('table.section-summary tbody tr');
-  return [...Array(rows.length)].map((_, ind) => {
-    const row = rows.eq(ind).children();
-    return {
-      groupName: row.find("input[type='text']").val(),
-      courseName: row.eq(2).text(),
-      days: [0, 1, 2, 3, 4, 5, 6].filter((__, i) => row.eq(7).text().includes(WEEK_DAYS[i])),
-      start: row.eq(8).text().split(':').join(''),
-      end: row.eq(9).text().split(':').join(''),
-    };
-  }).filter((val) => val.groupName !== '');
+  return [...Array(rows.length)]
+    .map((_, ind) => {
+      const row = rows.eq(ind).children();
+      return {
+        groupName: row.find("input[type='text']").val(),
+        courseName: row.eq(2).text(),
+        days: [0, 1, 2, 3, 4, 5, 6].filter((__, i) => row.eq(7).text().includes(WEEK_DAYS[i])),
+        start: row.eq(8).text().split(':').join(''),
+        end: row.eq(9).text().split(':').join(''),
+      };
+    })
+    .filter((val) => val.groupName !== '');
 };
 
 const getItem = () => {
   const item = localStorage.getItem(GROUPED_DATA_KEY);
-  if (item !== null && item !== '') {
-    const data = JSON.parse(item);
-    Object.keys(data).forEach((group) => {
-      data[group].forEach((course, ind) => {
-        const { start, end, ...others } = course;
-        data[group][ind] = { ...others, start: parseInt(start, 10), end: parseInt(end, 10) };
-      });
+  if (item === null || item === '') return {};
+  const data = JSON.parse(item);
+  Object.keys(data).forEach((group) => {
+    data[group].forEach((course, ind) => {
+      const { start, end, ...others } = course;
+      data[group][ind] = { ...others, start: parseInt(start, 10), end: parseInt(end, 10) };
     });
-    return data;
-  }
-  return {};
+  });
+  return data;
 };
+
 const setItem = (data) => {
   const copied = { ...data };
   Object.keys(data).forEach((groupName) => {
     if (data[groupName].length === 0) delete copied[groupName];
   });
   localStorage.setItem(GROUPED_DATA_KEY, JSON.stringify(copied));
-};
-
-const renderChosenCourses = () => {
-  $('#chosen-courses').empty();
-  const savedData = getItem();
-  if (JSON.stringify(savedData) === '{}') return;
-  Object.keys(savedData).forEach((groupName) => {
-    const courseList = savedData[groupName];
-    const createAccordion = () => {
-      let res = `<details><summary><strong>${groupName} :      ${courseList.length} selected</strong></summary>`;
-      courseList.forEach((course) => {
-        res += `<div id="selected-${course.courseName.replaceAll(' ', '')}">${course.courseName} <input type="button" value="delete" class="course-accordion-delete-button" id="delete-${course.courseName.replaceAll(' ', '')}" ></div>`;
-      });
-      res += '</details>';
-      return res;
-    };
-    $('#chosen-courses').append(`
-    <div id="group-${groupName}">
-        ${createAccordion()}
-        </details>
-    </div>
-`);
-  });
 };
 
 const deleteCourse = (id) => {
@@ -104,8 +82,7 @@ const onUpdate = () => {
 
 const onClear = () => {
   setItem({});
-  renderTable([]);
-  renderChosenCourses();
+  render();
 };
 
 const onCreate = () => {
@@ -159,6 +136,7 @@ const buttonsOnClickListener = () => {
   document.getElementById('create-timetable').addEventListener('click', onCreate);
   document.getElementById('clear-chosen-courses').addEventListener('click', onClear);
   $('body').on('click', '.course-accordion-delete-button', (e) => { deleteCourse(e.target.id); });
+  $('body').on('hover', '.tt-selcourse-mini', (e) => { console.log(e.target.id); });
 };
 
 /*
@@ -204,13 +182,43 @@ const editTimeTable = (tableData) => {
         if (course.start <= time && time <= course.end) {
           const id = `new-t${1}-${time2timeSlot(time)}-${day}`;
           $(`#${id}`).attr('class', 'tt-selcourse-mini');
+          $(`#${id}`).attr('data-hover', course.courseName);
         }
       });
     });
   });
 };
+
 const renderTable = (tableData) => {
   editTimeTable(tableData);
+};
+
+const renderChosenCourses = () => {
+  $('#chosen-courses').empty();
+  const savedData = getItem();
+  if (JSON.stringify(savedData) === '{}') return;
+  Object.keys(savedData).forEach((groupName) => {
+    const courseList = savedData[groupName];
+    const createAccordion = () => {
+      let res = `<details><summary><strong>${groupName} :      ${courseList.length} selected</strong></summary>`;
+      courseList.forEach((course) => {
+        res += `<div id="selected-${course.courseName.replaceAll(' ', '')}">${course.courseName} <input type="button" value="delete" class="course-accordion-delete-button" id="delete-${course.courseName.replaceAll(' ', '')}" ></div>`;
+      });
+      res += '</details>';
+      return res;
+    };
+    $('#chosen-courses').append(`
+    <div id="group-${groupName}">
+        ${createAccordion()}
+        </details>
+    </div>
+`);
+  });
+};
+
+const render = () => {
+  renderChosenCourses();
+  renderTable([]);
 };
 
 const addGlobalCSS = () => {
@@ -228,6 +236,26 @@ const addGlobalCSS = () => {
     margin: 0;
     padding: 0;
 }
+
+  .tt-selcourse-mini:before{
+    content: attr(data-hover);
+    visibility: hidden;
+    opacity: 0;
+    width: 140px;
+    background-color: midnightblue;
+    color: white;
+    text-align: center;
+    font-size:14px;
+    padding: 2px 0;
+    transition: opacity 0.3s ease-in-out;
+    transform:translate(20px,-20px);
+    position: absolute;
+    z-index: 10;
+  }
+  .tt-selcourse-mini:hover:before {
+    opacity: 1;
+    visibility: visible;
+  }
   </style>
   `;
   $('head').prepend(res);
@@ -295,12 +323,11 @@ const createElements = () => {
     <hr />
       `,
   );
-  renderChosenCourses();
-  renderTable([]);
 };
 
 const main = async () => {
   createElements();
+  render();
   buttonsOnClickListener();
 };
 
