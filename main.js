@@ -154,15 +154,15 @@ const buttonsOnClickListener = () => {
   document.getElementById('prev-table').addEventListener('click', () => {
     const current = getTimeTableNumber();
     $('#suggest-timetable').attr('data-combi', Math.max(0, current - 1));
-    const newNum = getTimeTableNumber();
-    renderTable('', newNum);
+
+    renderTable();
     renderScheduledCourses();
   });
   document.getElementById('next-table').addEventListener('click', () => {
     const current = getTimeTableNumber();
     $('#suggest-timetable').attr('data-combi', Math.min(G_results.length - 1, current + 1));
-    const newNum = getTimeTableNumber();
-    renderTable('', newNum);
+
+    renderTable();
     renderScheduledCourses();
   });
 };
@@ -207,7 +207,8 @@ const clearTimeTable = () => {
   });
 };
 
-const editTimeTable = (tableNum, errorMsg = '') => {
+const editTimeTable = (errorMsg = '') => {
+  const tableNum = getTimeTableNumber();
   const dynamicText = G_results.length !== 0 ? `${tableNum + 1}/${G_results.length}` : '';
   $('#time-table-title').text(`TimeTable  ${dynamicText}`);
   $('#comb-not-found').append(errorMsg);
@@ -225,9 +226,9 @@ const editTimeTable = (tableNum, errorMsg = '') => {
   });
 };
 
-const renderTable = (errorMsg, tableNum = 0) => {
+const renderTable = (errorMsg) => {
   clearTimeTable();
-  editTimeTable(tableNum, errorMsg);
+  editTimeTable(errorMsg);
 };
 
 const renderScheduledCourses = () => {
@@ -267,7 +268,7 @@ const renderChosenCourses = () => {
 
 const render = () => {
   renderChosenCourses();
-  renderTable([]);
+  renderTable();
 };
 
 const addGlobalCSS = () => {
