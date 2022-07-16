@@ -17,7 +17,7 @@ const GROUPED_DATA_KEY = 'groupedData';
 const WEEK_DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'];
 const G_results = [];
 
-const getValidRow = () => {
+const getAddedCoursesRow = () => {
   const rows = $('table.section-summary tbody tr');
   return [...Array(rows.length)]
     .map((_, ind) => {
@@ -72,7 +72,7 @@ const deleteCourse = (id) => {
 const onUpdate = () => {
   const savedData = getItem();
   // note: courseName is unique
-  getValidRow().forEach((newCourse) => {
+  getAddedCoursesRow().forEach((newCourse) => {
     Object.keys(savedData).forEach((savedGroupName) => {
       savedData[savedGroupName] = savedData[savedGroupName].filter((savedCourse) => savedCourse.courseName !== newCourse.courseName);
     });
@@ -232,12 +232,15 @@ const renderTable = (errorMsg) => {
 };
 
 const renderScheduledCourses = () => {
+  let html = '';
   $('#time-schedule-list').empty();
   if (G_results.length === 0) return;
-  let html = '';
-  G_results[getTimeTableNumber()].forEach((course) => {
-    html += `<div>${course.courseName}</div>`;
+  html += '<h4>Selected Courses</h4>';
+  html += '<table class="table table-striped"><tbody>';
+  G_results[getTimeTableNumber()].forEach((course, ind) => {
+    html += `<tr class="section${(ind % 2) + 1}"><td>${course.courseName}<td></tr>`;
   });
+  html += '</tbody></table>';
   $('#time-schedule-list').append(html);
 };
 
@@ -324,7 +327,7 @@ const createElements = () => {
   const INPUT_AREA = '<input type="text" style="max-width:80px; max-height:10px;"></input>';
   $('thead tr').prepend(`
       <th>
-          <div><button type="button" class="btn btn-warning" id="group-name-update">UPDATE</button></div>
+          <div><button type="button" class="btn btn-warning" id="group-name-update">&nbsp;&nbsp;Add&nbsp;&nbsp;</button></div>
           Group Name
       </th>`);
   $('table.section-summary tbody tr').prepend(`<td>${INPUT_AREA}</td>`);
@@ -333,9 +336,10 @@ const createElements = () => {
     `
     <hr />
     <h3>Course Solver</h3>
-    <div style="display: flex; justify-content: space-around">
+    <div id="comb-not-found" style="color:red;margin:10px;"></div>
+    <div style="display: flex; justify-content: center">
       <div style="margin: auto 0" id="chosen-courses-area">
-        <h3 style="margin: 1px">Chosen Courses</h3>
+        <h4 style="margin: 1px">Added Courses</h4>
         <div id="chosen-courses"></div>
         <div id="create-clear-buttons">
           <button type="button" class="btn btn-success" id="create-timetable">
@@ -345,7 +349,6 @@ const createElements = () => {
             CLEAR
           </button>
         </div>
-        <div id="comb-not-found" style="color:red;"></div>
       </div>
       <div id="suggest-timetable" style="display:flex" data-combi=0>
       <a style="display:block; font-size:20px; margin:20px;text-decoration: none;" href="javascript:void(0)" id="prev-table"><<</a>
@@ -380,7 +383,7 @@ const createElements = () => {
         </table>
         <a style="display:block; font-size:20px; margin:20px;text-decoration: none;" href="javascript:void(0)" id="next-table">>></a>
       </div>
-      <div id="time-schedule-list"></div>
+      <div id="time-schedule-list" style="margin:auto 0"></div>
     </div>
     <hr />
       `,
