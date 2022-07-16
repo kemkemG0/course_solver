@@ -1,3 +1,4 @@
+/* eslint-disable camelcase */
 /* eslint-disable no-use-before-define */
 /* eslint-disable max-len */
 // ==UserScript==
@@ -14,6 +15,7 @@
 
 const GROUPED_DATA_KEY = 'groupedData';
 const WEEK_DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'];
+const G_results = [];
 
 const getValidRow = () => {
   const rows = $('table.section-summary tbody tr');
@@ -111,13 +113,9 @@ const onCreate = () => {
     return true;
   };
 
-  let result = [];
-  const results = [];
-
   const dfs = (currentGroupInd = 0) => {
     if (currentGroupInd === groupNameList.length) {
-      result = isTimeTableOK() ? Object.keys(tempSelected).map((key) => tempSelected[key]) : [];
-      if (isTimeTableOK())results.push(Object.keys(tempSelected).map((key) => tempSelected[key]));
+      if (isTimeTableOK())G_results.push(Object.keys(tempSelected).map((key) => tempSelected[key]));
       return;
     }
     const currentGroupCourseList = savedData[groupNameList[currentGroupInd]];
@@ -137,11 +135,12 @@ const onCreate = () => {
       delete tempSelected[course.courseName];
     });
   };
+  G_results.length = 0;
   dfs();
   let errorMsg = '';
-  if (results.length === 0) errorMsg += 'Combination that allows you to take all types of classes was not found.<br>The combinations with the maximum number of classes will be displayed on the timetable.';
-  console.log(results);
-  renderTable(result, errorMsg);
+  if (G_results.length === 0) errorMsg += 'Combination that allows you to take all types of classes was not found.<br>The combinations with the maximum number of classes will be displayed on the timetable.';
+
+  renderTable(errorMsg);
 };
 
 const buttonsOnClickListener = () => {
@@ -149,6 +148,18 @@ const buttonsOnClickListener = () => {
   document.getElementById('create-timetable').addEventListener('click', onCreate);
   document.getElementById('clear-chosen-courses').addEventListener('click', onClear);
   $('body').on('click', '.course-accordion-delete-button', (e) => { deleteCourse(e.target.id); });
+  document.getElementById('prev-table').addEventListener('click', () => {
+    const current = parseInt($('#suggest-timetable').attr('data-combi'), 10);
+    $('#suggest-timetable').attr('data-combi', Math.max(0, current - 1));
+    const newNum = parseInt($('#suggest-timetable').attr('data-combi'), 10);
+    renderTable('', newNum);
+  });
+  document.getElementById('next-table').addEventListener('click', () => {
+    const current = parseInt($('#suggest-timetable').attr('data-combi'), 10);
+    $('#suggest-timetable').attr('data-combi', Math.min(G_results.length - 1, current + 1));
+    const newNum = parseInt($('#suggest-timetable').attr('data-combi'), 10);
+    renderTable('', newNum);
+  });
 };
 
 /*
@@ -177,9 +188,9 @@ const createBaseTable = (term) => {
   return html;
 };
 
-const editTimeTable = (tableData, errorMsg = '') => {
+const clearTimeTable = () => {
   $('#comb-not-found').empty();
-  $('#comb-not-found').append(errorMsg);
+  $('#comb-not-found').append('');
   // change every class to notime
   TIME_SLOT_LIST.forEach((time, timeSlot) => {
     [1, 2].forEach((term) => {
@@ -189,8 +200,14 @@ const editTimeTable = (tableData, errorMsg = '') => {
       });
     });
   });
+};
+
+const editTimeTable = (tableNum, errorMsg = '') => {
+  const dynamicText = G_results.length !== 0 ? `${tableNum + 1}/${G_results.length}` : '';
+  $('#time-table-title').text(`TimeTable  ${dynamicText}`);
+  $('#comb-not-found').append(errorMsg);
   const bgColors = ['jp-orange', 'jp-blue', 'jp-green', 'jp-pink', 'jp-purple', 'jp-gold'];
-  tableData.forEach((course, cind) => {
+  G_results[tableNum]?.forEach((course, cind) => {
     course.days.forEach((day) => {
       TIME_SLOT_LIST.forEach((time) => {
         if (course.start <= time && time < course.end) {
@@ -203,8 +220,9 @@ const editTimeTable = (tableData, errorMsg = '') => {
   });
 };
 
-const renderTable = (tableData, errorMsg) => {
-  editTimeTable(tableData, errorMsg);
+const renderTable = (errorMsg, tableNum = 0) => {
+  clearTimeTable();
+  editTimeTable(tableNum, errorMsg);
 };
 
 const renderChosenCourses = () => {
@@ -313,12 +331,12 @@ const createElements = () => {
         </div>
         <div id="comb-not-found" style="color:red;"></div>
       </div>
-      <div id="suggest-timetable" style="display:flex">
+      <div id="suggest-timetable" style="display:flex" data-combi=0>
       <a style="display:block; font-size:20px; margin:20px;text-decoration: none;" href="javascript:void(0)" id="prev-table"><<</a>
         <table cellspacing="0" cellpadding="0" border="1">
           <tbody>
             <tr>
-              <td class="tt-legend"><h6>Timetable</h6></td>
+              <td class="tt-legend"><h6 id="time-table-title">Timetable</h6></td>
             </tr>
             <tr>
               <td>
@@ -346,7 +364,7 @@ const createElements = () => {
         </table>
         <a style="display:block; font-size:20px; margin:20px;text-decoration: none;" href="javascript:void(0)" id="next-table">>></a>
       </div>
-      <div> id="time-schedule-list"</div>
+      <divid="time-schedule-list"></div>
     </div>
     <hr />
       `,
