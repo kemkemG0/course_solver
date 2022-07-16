@@ -313,7 +313,8 @@ const createElements = () => {
         </div>
         <div id="comb-not-found" style="color:red;"></div>
       </div>
-      <div id="suggest-timetable">
+      <div id="suggest-timetable" style="display:flex">
+      <a style="display:block; font-size:20px; margin:20px;text-decoration: none;" href="javascript:void(0)" id="prev-table"><<</a>
         <table cellspacing="0" cellpadding="0" border="1">
           <tbody>
             <tr>
@@ -343,7 +344,9 @@ const createElements = () => {
             </tr>
           </tbody>
         </table>
+        <a style="display:block; font-size:20px; margin:20px;text-decoration: none;" href="javascript:void(0)" id="next-table">>></a>
       </div>
+      <div> id="time-schedule-list"</div>
     </div>
     <hr />
       `,
