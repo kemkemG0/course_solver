@@ -143,7 +143,6 @@ const buttonsOnClickListener = () => {
   document.getElementById('create-timetable').addEventListener('click', onCreate);
   document.getElementById('clear-chosen-courses').addEventListener('click', onClear);
   $('body').on('click', '.course-accordion-delete-button', (e) => { deleteCourse(e.target.id); });
-  $('body').on('hover', '.tt-selcourse-mini', (e) => { console.log(e.target.id); });
 };
 
 /*
@@ -182,13 +181,13 @@ const editTimeTable = (tableData) => {
       });
     });
   });
-  // add color
-  tableData.forEach((course) => {
+  const bgColors = ['jp-orange', 'jp-blue', 'jp-green', 'jp-pink', 'jp-purple', 'jp-gold'];
+  tableData.forEach((course, cind) => {
     course.days.forEach((day) => {
       TIME_SLOT_LIST.forEach((time) => {
-        if (course.start <= time && time <= course.end) {
+        if (course.start <= time && time < course.end) {
           const id = `new-t${course.term}-${time2timeSlot(time)}-${day}`;
-          $(`#${id}`).attr('class', 'tt-selcourse-mini');
+          $(`#${id}`).attr('class', `${bgColors[cind % 6]} selected-course-on-table`);
           $(`#${id}`).attr('data-hover', course.courseName);
         }
       });
@@ -244,7 +243,7 @@ const addGlobalCSS = () => {
     padding: 0;
 }
 
-  .tt-selcourse-mini:before{
+  .selected-course-on-table:before{
     content: attr(data-hover);
     visibility: hidden;
     opacity: 0;
@@ -259,10 +258,18 @@ const addGlobalCSS = () => {
     position: absolute;
     z-index: 10;
   }
-  .tt-selcourse-mini:hover:before {
+  .selected-course-on-table:hover:before {
     opacity: 1;
     visibility: visible;
   }
+  
+  .jp-orange{background:#ee827c}
+  .jp-blue{background:#44617b}
+  .jp-green{background:#00a497}
+  .jp-pink{background:#bc64a4}
+  .jp-purple{background:#745399}
+  .jp-gold{background:#e6b422}
+
   </style>
   `;
   $('head').prepend(res);
