@@ -93,17 +93,19 @@ const onClear = () => {
 const onCreate = () => {
   // time is from 00:00 to 24:00
   // 0000 to 2460
-  // ready array timetable[7][2460]
-  const timeTable = [...Array(7)].map(() => Array(2465).fill(0));
+  // ready array timetable[3][5][2460]:=[term][day][time]
+  const timeTable = [0, 1, 2].map(() => [...Array(5)].map(() => Array(2465).fill(0)));
   const savedData = getItem();
   const groupNameList = Object.keys(savedData);
   const tempSelected = {};
   const isTimeTableOK = () => {
-    for (let day = 0; day < 7; day += 1) {
-      let sum = 0;
-      for (let time = 0; time < 2460; time += 1) {
-        sum += timeTable[day][time];
-        if (sum >= 2) { return false; }
+    for (let term = 1; term <= 2; term += 1) {
+      for (let day = 0; day < 5; day += 1) {
+        let sum = 0;
+        for (let time = 0; time < 2460; time += 1) {
+          sum += timeTable[term][day][time];
+          if (sum >= 2) { return false; }
+        }
       }
     }
     return true;
@@ -120,14 +122,14 @@ const onCreate = () => {
     // deciede which course to use
     // Euler Tour(modify => recursion => fix)
       course.days.forEach((day) => {
-        timeTable[day][course.start] += 1;
-        timeTable[day][course.end] -= 1;
+        timeTable[course.term][day][course.start] += 1;
+        timeTable[course.term][day][course.end] -= 1;
       });
       tempSelected[course.courseName] = { ...course };
       dfs(currentGroupInd + 1);
       course.days.forEach((day) => {
-        timeTable[day][course.start] -= 1;
-        timeTable[day][course.end] += 1;
+        timeTable[course.term][day][course.start] -= 1;
+        timeTable[course.term][day][course.end] += 1;
       });
       delete tempSelected[course.courseName];
     });
@@ -180,12 +182,12 @@ const editTimeTable = (tableData) => {
       });
     });
   });
-  // ddd color
+  // add color
   tableData.forEach((course) => {
     course.days.forEach((day) => {
       TIME_SLOT_LIST.forEach((time) => {
         if (course.start <= time && time <= course.end) {
-          const id = `new-t${1}-${time2timeSlot(time)}-${day}`;
+          const id = `new-t${course.term}-${time2timeSlot(time)}-${day}`;
           $(`#${id}`).attr('class', 'tt-selcourse-mini');
           $(`#${id}`).attr('data-hover', course.courseName);
         }
