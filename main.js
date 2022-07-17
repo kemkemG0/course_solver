@@ -16,6 +16,7 @@
 const GROUPED_DATA_KEY = 'groupedData';
 const WEEK_DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'];
 const G_results = [];
+let G_mxNum = 0;
 let errorMsg = '';
 
 const getAddedCoursesRow = () => {
@@ -101,6 +102,7 @@ const onCreate = () => {
   const savedData = getItem();
   const groupNameList = Object.keys(savedData);
   const tempSelected = {};
+  let depth = 0;
 
   const canChoose = (lists, startEnd) => {
     const s = startEnd[0];
@@ -114,14 +116,16 @@ const onCreate = () => {
     return res;
   };
   const dfs = (currentGroupInd = 0) => {
+    depth += 1;
     if (currentGroupInd === groupNameList.length) {
-      G_results.push(Object.keys(tempSelected).map((key) => tempSelected[key]));
+      const res = Object.keys(tempSelected).map((key) => tempSelected[key]);
+      G_mxNum = Math.max(G_mxNum, res.length);
+      if (G_mxNum <= res.length)G_results.push(res);
       return;
     }
-    savedData[groupNameList[currentGroupInd]].forEach((course) => {
-      // WITHOUT using "course"
-      dfs(currentGroupInd + 1);
 
+    if (depth >= 1000000) return;
+    savedData[groupNameList[currentGroupInd]].forEach((course) => {
       const {
         start, end, term, courseName, days,
       } = course;
@@ -145,6 +149,8 @@ const onCreate = () => {
           if (test[term][day][index][0] === start && test[term][day][index][1] === end) { test[term][day].splice(index, 1); }
         });
       });
+      // WITHOUT using "course"
+      dfs(currentGroupInd + 1);
     });
   };
   G_results.length = 0;
