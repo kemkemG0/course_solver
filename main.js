@@ -97,56 +97,69 @@ const onCreate = () => {
   // time is from 00:00 to 24:00
   // 0000 to 2460
   // ready array timetable[3][5][2460]:=[term][day][time]
-  const timeTable = [0, 1, 2].map(() => [...Array(5)].map(() => Array(2465).fill(0)));
+  const test = [0, 1, 2].map(() => [...Array(5)].map(() => []));
   const savedData = getItem();
   const groupNameList = Object.keys(savedData);
   const tempSelected = {};
-  const isTimeTableOK = () => {
-    for (let term = 1; term <= 2; term += 1) {
-      for (let day = 0; day < 5; day += 1) {
-        let sum = 0;
-        for (let time = 0; time < 2460; time += 1) {
-          sum += timeTable[term][day][time];
-          if (sum >= 2) { return false; }
-        }
-      }
-    }
-    return true;
-  };
 
+  const canChoose = (lists, startEnd) => {
+    const s = startEnd[0];
+    const e = startEnd[1];
+    let res = true;
+    // (s,e,x,x) or (x,x,s,e) is ok
+    // otherwise no
+    lists.forEach((t) => {
+      if (!((e <= t[0]) || (t[1] <= s))) { res = false; }
+    });
+    return res;
+  };
   const dfs = (currentGroupInd = 0) => {
     if (currentGroupInd === groupNameList.length) {
-      if (isTimeTableOK()) {
-        G_results.push(Object.keys(tempSelected).map((key) => tempSelected[key]));
-        const maxSelected = G_results.reduce((sum, e) => Math.max(sum, e.length), 0);
-        const temp = [...G_results.filter((e) => e.length === maxSelected)];
-        G_results.length = 0;
-        G_results.push(...temp);
-      }
+      G_results.push(Object.keys(tempSelected).map((key) => tempSelected[key]));
+
       return;
     }
     savedData[groupNameList[currentGroupInd]].forEach((course) => {
+      const {
+        start, end, term, courseName, days,
+      } = course;
       // WITHOUT using "course"
       dfs(currentGroupInd + 1);
 
       // WITH using "course"
       // deciede which course to use
       // Euler Tour(modify => recursion => fix)
-      course.days.forEach((day) => {
-        timeTable[course.term][day][course.start] += 1;
-        timeTable[course.term][day][course.end] -= 1;
+
+      // for stop dfs if not possible
+      let isContinue = true;
+      days.forEach((day) => {
+        if (!canChoose(test[term][day], [start, end])) isContinue = false;
+        if (!isContinue) return;
+        test[term][day].push([start, end]);
       });
-      tempSelected[course.courseName] = { ...course };
+      if (!isContinue) return;
+
+      tempSelected[courseName] = { ...course };
       dfs(currentGroupInd + 1);
-      delete tempSelected[course.courseName];
-      course.days.forEach((day) => {
-        timeTable[course.term][day][course.start] -= 1;
-        timeTable[course.term][day][course.end] += 1;
+      delete tempSelected[courseName];
+      days.forEach((day) => {
+        // delete [start,end] from test[term][day]
+        for (let index = 0; index < test[term][day].length; index += 1) {
+          if (test[term][day][index][0] === start && test[term][day][index][1] === end) {
+            test[term][day].splice(index, 1);
+            break;
+          }
+        }
       });
     });
   };
   G_results.length = 0;
   dfs();
+  const maxSelected = G_results.reduce((sum, e) => Math.max(sum, e.length), 0);
+  const temp = [...G_results.filter((e) => e.length === maxSelected)];
+  G_results.length = 0;
+  G_results.push(...temp);
+
   if (G_results.length !== 0 && G_results[0].length !== groupNameList.length) errorMsg = 'Combination that allows you to take all types of classes was not found.<br>The combinations with the maximum number of classes will be displayed on the timetable.';
   else errorMsg = '';
 
