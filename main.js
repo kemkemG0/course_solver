@@ -116,20 +116,18 @@ const onCreate = () => {
   const dfs = (currentGroupInd = 0) => {
     if (currentGroupInd === groupNameList.length) {
       G_results.push(Object.keys(tempSelected).map((key) => tempSelected[key]));
-
       return;
     }
     savedData[groupNameList[currentGroupInd]].forEach((course) => {
-      const {
-        start, end, term, courseName, days,
-      } = course;
       // WITHOUT using "course"
       dfs(currentGroupInd + 1);
 
+      const {
+        start, end, term, courseName, days,
+      } = course;
       // WITH using "course"
       // deciede which course to use
       // Euler Tour(modify => recursion => fix)
-
       // for stop dfs if not possible
       let isContinue = true;
       days.forEach((day) => {
@@ -143,13 +141,9 @@ const onCreate = () => {
       dfs(currentGroupInd + 1);
       delete tempSelected[courseName];
       days.forEach((day) => {
-        // delete [start,end] from test[term][day]
-        for (let index = 0; index < test[term][day].length; index += 1) {
-          if (test[term][day][index][0] === start && test[term][day][index][1] === end) {
-            test[term][day].splice(index, 1);
-            break;
-          }
-        }
+        test[term][day].forEach((_, index) => {
+          if (test[term][day][index][0] === start && test[term][day][index][1] === end) { test[term][day].splice(index, 1); }
+        });
       });
     });
   };
