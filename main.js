@@ -125,8 +125,7 @@ const onCreate = () => {
       }
       return;
     }
-    const currentGroupCourseList = savedData[groupNameList[currentGroupInd]];
-    currentGroupCourseList.forEach((course) => {
+    savedData[groupNameList[currentGroupInd]].forEach((course) => {
       // WITHOUT using "course"
       dfs(currentGroupInd + 1);
 
@@ -222,7 +221,8 @@ const editTimeTable = () => {
   const tableNum = getTimeTableNumber();
   const dynamicText = G_results.length !== 0 ? `${tableNum + 1}/${G_results.length}` : '';
   $('#time-table-title').text(`TimeTable  ${dynamicText}`);
-  $('#comb-not-found').text(errorMsg);
+  $('#comb-not-found').empty();
+  $('#comb-not-found').append(errorMsg);
   const bgColors = ['jp-orange', 'jp-blue', 'jp-green', 'jp-pink', 'jp-purple', 'jp-gold'];
   G_results[tableNum]?.forEach((course, cind) => {
     course.days.forEach((day) => {
