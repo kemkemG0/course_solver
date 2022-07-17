@@ -4,13 +4,14 @@
 // ==UserScript==
 // @name         UBC course solver
 // @namespace    https://courses.students.ubc.ca/
-// @version      0.1
+// @version      1.0
 // @description  opitimise choosing your courses
 // @author       kemkemG0
 // @match        https://courses.students.ubc.ca/cs/courseschedule?pname=subjarea&tname=sectsearch*
 // @match        https://courses.students.ubc.ca/cs/courseschedule
 // @icon         https://www.google.com/s2/favicons?sz=64&domain=stackoverflow.com
 // @grant        none
+// @license MIT
 // ==/UserScript==
 
 const GROUPED_DATA_KEY = 'groupedData';
