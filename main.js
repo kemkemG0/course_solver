@@ -16,6 +16,7 @@
 const GROUPED_DATA_KEY = 'groupedData';
 const WEEK_DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'];
 const G_results = [];
+let errorMsg = '';
 
 const getAddedCoursesRow = () => {
   const rows = $('table.section-summary tbody tr');
@@ -115,32 +116,42 @@ const onCreate = () => {
 
   const dfs = (currentGroupInd = 0) => {
     if (currentGroupInd === groupNameList.length) {
-      if (isTimeTableOK())G_results.push(Object.keys(tempSelected).map((key) => tempSelected[key]));
+      if (isTimeTableOK()) {
+        G_results.push(Object.keys(tempSelected).map((key) => tempSelected[key]));
+        const maxSelected = G_results.reduce((sum, e) => Math.max(sum, e.length), 0);
+        const temp = [...G_results.filter((e) => e.length === maxSelected)];
+        G_results.length = 0;
+        G_results.push(...temp);
+      }
       return;
     }
     const currentGroupCourseList = savedData[groupNameList[currentGroupInd]];
     currentGroupCourseList.forEach((course) => {
-    // deciede which course to use
-    // Euler Tour(modify => recursion => fix)
+      // WITHOUT using "course"
+      dfs(currentGroupInd + 1);
+
+      // WITH using "course"
+      // deciede which course to use
+      // Euler Tour(modify => recursion => fix)
       course.days.forEach((day) => {
         timeTable[course.term][day][course.start] += 1;
         timeTable[course.term][day][course.end] -= 1;
       });
       tempSelected[course.courseName] = { ...course };
       dfs(currentGroupInd + 1);
+      delete tempSelected[course.courseName];
       course.days.forEach((day) => {
         timeTable[course.term][day][course.start] -= 1;
         timeTable[course.term][day][course.end] += 1;
       });
-      delete tempSelected[course.courseName];
     });
   };
   G_results.length = 0;
   dfs();
-  let errorMsg = '';
-  if (G_results.length === 0) errorMsg += 'Combination that allows you to take all types of classes was not found.<br>The combinations with the maximum number of classes will be displayed on the timetable.';
+  if (G_results.length !== 0 && G_results[0].length !== groupNameList.length) errorMsg = 'Combination that allows you to take all types of classes was not found.<br>The combinations with the maximum number of classes will be displayed on the timetable.';
+  else errorMsg = '';
 
-  renderTable(errorMsg);
+  renderTable();
   renderScheduledCourses();
 };
 
@@ -207,11 +218,11 @@ const clearTimeTable = () => {
   });
 };
 
-const editTimeTable = (errorMsg = '') => {
+const editTimeTable = () => {
   const tableNum = getTimeTableNumber();
   const dynamicText = G_results.length !== 0 ? `${tableNum + 1}/${G_results.length}` : '';
   $('#time-table-title').text(`TimeTable  ${dynamicText}`);
-  $('#comb-not-found').append(errorMsg);
+  $('#comb-not-found').text(errorMsg);
   const bgColors = ['jp-orange', 'jp-blue', 'jp-green', 'jp-pink', 'jp-purple', 'jp-gold'];
   G_results[tableNum]?.forEach((course, cind) => {
     course.days.forEach((day) => {
@@ -226,9 +237,9 @@ const editTimeTable = (errorMsg = '') => {
   });
 };
 
-const renderTable = (errorMsg) => {
+const renderTable = () => {
   clearTimeTable();
-  editTimeTable(errorMsg);
+  editTimeTable();
 };
 
 const renderScheduledCourses = () => {
@@ -237,7 +248,7 @@ const renderScheduledCourses = () => {
   if (G_results.length === 0) return;
   html += '<h4>Selected Courses</h4>';
   html += '<table class="table table-striped"><tbody>';
-  G_results[getTimeTableNumber()].forEach((course, ind) => {
+  G_results[getTimeTableNumber()]?.forEach((course, ind) => {
     html += `<tr class="section${(ind % 2) + 1}"><td>${course.courseName}<td></tr>`;
   });
   html += '</tbody></table>';
