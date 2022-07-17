@@ -3,7 +3,7 @@ This for UBC(The University of British Columbia) students only.
 When registering for a course, you can create an optimal timetable so that class times do not overlap.
 
 ### Note: This is a browser extension
-You can download from here(https://greasyfork.org/ja/scripts/448014-ubc-course-solver)
+You can install to your browser from here(https://greasyfork.org/ja/scripts/448014-ubc-course-solver)
 
 ## How to use
 
